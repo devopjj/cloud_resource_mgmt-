@@ -1,0 +1,14 @@
+accounts:
+  - name: aws-main
+    provider: aws
+    profile: default
+    regions: ["us-east-1"]  # Route53 是 global，但我们保留这个字段
+
+  - name: aliyun-dns-prod
+    provider: aliyun
+    access_key: ${ALICLOUD_ACCESS_KEY}
+    secret_key: ${ALICLOUD_SECRET_KEY}
+
+  - name: cloudflare-main
+    provider: cloudflare
+    api_token: ${CLOUDFLARE_TOKEN}
