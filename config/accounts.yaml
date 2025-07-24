@@ -1,9 +1,10 @@
 accounts:
-  - name: aws-main
+  - name: aws-wangyou
     provider: aws
-    profile: default
-    regions: ["us-east-1"]  # Route53 是 global，但我们保留这个字段
-
+    profile: rptsw_wangyou
+    account_id: "123456789012"
+    regions: ["ap-east-1"]  # Route53 是 global，但我们保留这个字段
+    default_region: ap-east-1
   - name: aliyun-dns-prod
     provider: aliyun
     access_key: ${ALICLOUD_ACCESS_KEY}
@@ -12,3 +13,4 @@ accounts:
   - name: cloudflare-main
     provider: cloudflare
     api_token: ${CLOUDFLARE_TOKEN}
+
