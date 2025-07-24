@@ -1,7 +1,7 @@
 # core/database.py
 
 from sqlalchemy.orm import sessionmaker
-from core.orm_models import init_db
+from core.models import init_db
 
 _engine = None
 Session = None
@@ -13,4 +13,3 @@ def setup_database(db_url: str):
 
 def get_session():
     return Session()
-
