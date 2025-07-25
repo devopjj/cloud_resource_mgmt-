@@ -6,6 +6,12 @@ from core.context import CollectorContext
 from core.registry import COLLECTOR_REGISTRY
 from core.database import setup_database, get_session  # 引入数据库初始化接口
 from core import models 
+DB_NAME = "cloud_assets"
+MYSQL_URL = f"mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/{DB_NAME}?charset=utf8mb4"
+SQLITE_URL = f"sqlite:///{DB_NAME}.db"
+POSTGRESQL_URL = f"postgresql+psycopg2://username:password@localhost:5432/{DB_NAME}"
+DB_URL  = os.getenv("DB_URL", MYSQL_URL)
+engine = setup_database(DB_URL )
 
 def import_all_collectors():
     base_dir = "collectors"
@@ -20,8 +26,7 @@ def import_all_collectors():
                     print(f"[!] 载入收集器 {module_name} 失败: {e}")
 
 def main():
-    # 初始化数据库（SQLite），确保表创建
-    engine = setup_database("sqlite:///cloud_resources.db")
+
     session = get_session()
 
     import_all_collectors()  # 动态导入并注册所有收集器

@@ -20,3 +20,17 @@ db_url = "postgresql+psycopg2://user:pass@host:5432/dbname"
 engine = init_db(db_url)
 
 ```
+
+### 0725: init_db.py
+✅ 适用数据库：
+    ✅ SQLite
+    ✅ MySQL（自动 CREATE DATABASE）
+    #### 注意会删库重建
+    ```
+    python init_db.py
+    🚀 使用数据库连接：mysql+mysqlconnector://extra:bluecat63@10.11.11.62:3306/cloud_resources?charset=utf8mb4
+    ✅ MySQL 数据库 `cloud_resources` 已确认存在
+    ✅ 数据表初始化完成
+
+    ```
+    ✅ PostgreSQL（自动 CREATE DATABASE）

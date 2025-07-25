@@ -58,5 +58,42 @@ class AWSRoute53Collector(BaseCollector):
         except Exception as e:
             print(f"[!] Hosted zones list failed: {e}")
         
+        # 3. 各托管区的 DNS 解析记录（dns_record）
+        try:
+            for z in zones:
+                zone_id = z["Id"].split("/")[-1]
+                zone_name = z["Name"]
+
+                paginator = route53.get_paginator("list_resource_record_sets")
+                record_sets_iter = paginator.paginate(HostedZoneId=zone_id)
+
+                for page in record_sets_iter:
+                    for rr in page.get("ResourceRecordSets", []):
+                        rr_type = rr.get("Type")
+                        rr_name = rr.get("Name")
+                        rr_ttl = rr.get("TTL", None)
+                        rr_values = [r.get("Value") for r in rr.get("ResourceRecords", [])] if "ResourceRecords" in rr else []
+                        rr_status = "alias" if "AliasTarget" in rr else "normal"
+
+                        results.append(ResourceItem(
+                            provider="aws",
+                            account_id=self.context.account_id,
+                            region="global",
+                            resource_type="dns_record",
+                            resource_id=f"{zone_id}:{rr_name}:{rr_type}",
+                            name=rr_name,
+                            status=rr_status,
+                            zone=zone_id,
+                            tags={},
+                            metadata={
+                                "type": rr_type,
+                                "ttl": rr_ttl,
+                                "value": rr_values,
+                                **rr
+                            },
+                            fetched_at=datetime.now()
+                        ))
+        except Exception as e:
+            print(f"[!] DNS record list failed for zone {zone_id}: {e}")
         
         return results

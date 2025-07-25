@@ -57,6 +57,7 @@ class ResourceItem(BaseModel):
 
         # 直接将 fetched_at 作为 datetime 对象传入
         return CloudResource(
+            provider=self.provider,
             cloud_account_id=self.account_id,
             resource_type=self.resource_type,
             resource_id=self.resource_id,
@@ -75,7 +76,7 @@ class CloudAccount(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(128), nullable=False)
-    provider = Column(Enum(CloudProvider), nullable=False)
+    provider = Column(String(64), nullable=False)
     account_id = Column(String(128), nullable=False)
     region_json = Column(Text)  # JSON string of region status
     tags = Column(JSON, default={})
@@ -90,10 +91,11 @@ class CloudResource(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     cloud_account_id = Column(String(36), ForeignKey("cloud_account.id"), nullable=False)
-    resource_type = Column(Enum(ResourceType), default=ResourceType.unknown)
+    resource_type = Column(String(64), nullable=False)
     resource_id = Column(String(128), nullable=False)  # Native cloud resource ID
     name = Column(String(256))
     region = Column(String(64))
+    provider = Column(String(64), nullable=False)
     zone = Column(String(64))
     status = Column(String(64))
     tags = Column(JSON, default={})
@@ -132,6 +134,9 @@ def get_session(engine):
 # ---------- CLI USAGE ----------
 
 if __name__ == "__main__":
-    db_url = os.getenv("DB_URL", "sqlite:///cloud_assets.db")
+    MYSQL_URL = "mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/cloud_resources?charset=utf8mb4"
+    SQLITE_URL = "sqlite:///cloud_assets.db"
+    POSTGRESQL_URL="postgresql+psycopg2://username:password@localhost:5432/cloud_assets"
+    db_url = os.getenv("DB_URL", MYSQL_URL)
     engine = init_db(db_url)
     print(f"✅ Initialized DB at {db_url}")
