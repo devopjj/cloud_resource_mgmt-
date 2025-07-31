@@ -1,6 +1,6 @@
 # init_db.py
 
-from core.models import Base
+from core.models import Base  # 只要 Base 定义包含全部 model，这样就能全部建表
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.engine import Engine
@@ -97,10 +97,10 @@ def reset_tables(db_url: str):
     print("✅ 所有索引已创建")
 
 if __name__ == "__main__":
-    MYSQL_URL = "mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/cloud_assets?charset=utf8mb4"
-    SQLITE_URL = "sqlite:///cloud_assets2.db"
-    POSTGRESQL_URL="postgresql+psycopg2://username:password@localhost:5432/cloud_assets"
-    db_url = os.getenv("DB_URL", SQLITE_URL)
+    MYSQL_URL = "mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/cloud_resources?charset=utf8mb4"
+    SQLITE_URL = "sqlite:///cloud_resources2.db"
+    POSTGRESQL_URL="postgresql+psycopg2://username:password@localhost:5432/cloud_resources"
+    db_url = os.getenv("DB_URL", MYSQL_URL)
      
     print(f"🚀 使用数据库连接：{db_url}")
 

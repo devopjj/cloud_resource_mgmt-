@@ -10,7 +10,7 @@ import CloudFlare
 @register_collector("cloudflare_dns")
 class CloudflareDNSCollector(BaseCollector):
     def collect(self) -> List[ResourceItem]:
-        cf = CloudFlare.CloudFlare(token=os.environ["CLOUDFLARE_API_TOKEN"])
+        cf = CloudFlare.CloudFlare(token=os.environ.get("CLOUDFLARE_API_TOKEN"))
         results = []
 
         try:
@@ -26,10 +26,8 @@ class CloudflareDNSCollector(BaseCollector):
                 for z in zones:
                     zone_id = z["id"]
                     zone_name = z["name"]
-                    if zone_count >= 5:
-                        return results
-                    zone_count += 1
-                    # 注册域名
+
+                    # registered_domain
                     results.append(ResourceItem(
                         provider="cloudflare",
                         account_id=self.context.account_id,
@@ -44,7 +42,7 @@ class CloudflareDNSCollector(BaseCollector):
                         fetched_at=datetime.now()
                     ))
 
-                    # 托管域 zone
+                    # dns_zone
                     results.append(ResourceItem(
                         provider="cloudflare",
                         account_id=self.context.account_id,
@@ -59,23 +57,23 @@ class CloudflareDNSCollector(BaseCollector):
                         fetched_at=datetime.now()
                     ))
 
-                    # 分页获取 DNS records
+                    # DNS records
                     rr_page = 1
                     while True:
-                        rr_records = cf.zones.dns_records.get(
+                        rr = cf.zones.dns_records.get(
                             zone_id,
                             params={"page": rr_page, "per_page": 100}
                         )
-                        if not rr_records:
+                        if not rr:
                             break
 
-                        for rr in rr_records:
-                            record_id = rr["id"]
-                            record_name = rr["name"]
-                            record_type = rr["type"]
-                            record_value = rr.get("content")
-                            record_ttl = rr.get("ttl")
-                            record_status = "proxied" if rr.get("proxied", False) else "normal"
+                        for r in rr:
+                            record_id = r["id"]
+                            record_name = r["name"]
+                            record_type = r["type"]
+                            record_value = r.get("content")
+                            record_ttl = r.get("ttl")
+                            record_status = "proxied" if r.get("proxied", False) else "normal"
 
                             results.append(ResourceItem(
                                 provider="cloudflare",
@@ -91,12 +89,12 @@ class CloudflareDNSCollector(BaseCollector):
                                     "type": record_type,
                                     "ttl": record_ttl,
                                     "value": record_value,
-                                    **rr
+                                    **r
                                 },
                                 fetched_at=datetime.now()
                             ))
 
-                        if len(rr_records) < 100:
+                        if len(rr) < 100:
                             break
                         rr_page += 1
 

@@ -2,12 +2,13 @@ import uuid
 from datetime import datetime
 import enum
 import os
-
+import json
 from sqlalchemy import (
-    create_engine, Column, String, DateTime, Enum,
+    create_engine, Column, String, DateTime, Enum,Index,
     ForeignKey, Text, Integer, JSON
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
@@ -44,6 +45,9 @@ class ResourceItem(BaseModel):
     name: Optional[str]
     status: Optional[str]
     zone: Optional[str]
+    domain_name: Optional[str] = None
+    vpc_id: Optional[str] = None
+    ip_addresses: Optional[list[str]] = []  
     tags: Dict[str, str] = {}
     metadata: Dict[str, Any] = {}
     fetched_at: datetime  # 确保 fetched_at 字段存在
@@ -64,6 +68,9 @@ class ResourceItem(BaseModel):
             name=self.name,
             region=self.region,
             zone=self.zone,
+            domain_name=self.domain_name,
+            vpc_id=self.vpc_id,
+            ip_addresses=json.dumps(self.ip_addresses),
             status=self.status,
             tags=self.tags,
             resource_metadata=serialized_metadata,  # 使用序列化后的 metadata
@@ -93,16 +100,53 @@ class CloudResource(Base):
     cloud_account_id = Column(String(36), ForeignKey("cloud_account.id"), nullable=False)
     resource_type = Column(String(64), nullable=False)
     resource_id = Column(String(128), nullable=False)  # Native cloud resource ID
-    name = Column(String(256))
     region = Column(String(64))
     provider = Column(String(64), nullable=False)
     zone = Column(String(64))
+    name = Column(String(256))
     status = Column(String(64))
+    domain_name = Column(String(256))
+    vpc_id = Column(String(64))
+    ip_addresses = Column(Text)    
     tags = Column(JSON, default={})
     resource_metadata = Column(JSON, default={})  # ✅ renamed from 'metadata'
     fetched_at = Column(DateTime, default=datetime.utcnow)
 
     cloud_account = relationship("CloudAccount", back_populates="resources")
+
+class ResourceRelationship(Base):
+    __tablename__ = "resource_relationship"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_id = Column(String(64), nullable=False)
+    target_id = Column(String(64), nullable=False)
+    relation_type = Column(String(64), nullable=False)
+
+    __table_args__ = (
+        Index("idx_relation_src", "source_id"),
+        Index("idx_relation_tgt", "target_id"),
+    )
+
+
+class ResourceDiffLog(Base):
+    __tablename__ = "resource_diff_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    cloud_account_id = Column(String(64), nullable=False)
+    provider = Column(String(32), nullable=False)
+    region = Column(String(64))
+    resource_type = Column(String(64), nullable=False)
+    resource_id = Column(String(128), nullable=False)
+    changed_fields = Column(Text, nullable=False)  # JSON 格式字符串
+    raw_before = Column(Text)
+    raw_after = Column(Text)
+    changed_at = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        Index("idx_resource_diff_rid", "resource_id"),
+        Index("idx_resource_diff_time", "changed_at"),
+    )
+
 
 
 class DomainRecord(Base):
@@ -122,7 +166,7 @@ class DomainRecord(Base):
 
 # ---------- INIT FUNCTIONS ----------
 
-def init_db(db_url="sqlite:///cloud_assets.db"):
+def init_db(db_url="sqlite:///cloud_resources.db"):
     engine = create_engine(db_url, echo=False, future=True)
     Base.metadata.create_all(engine)
     return engine
@@ -135,8 +179,8 @@ def get_session(engine):
 
 if __name__ == "__main__":
     MYSQL_URL = "mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/cloud_resources?charset=utf8mb4"
-    SQLITE_URL = "sqlite:///cloud_assets.db"
-    POSTGRESQL_URL="postgresql+psycopg2://username:password@localhost:5432/cloud_assets"
+    SQLITE_URL = "sqlite:///cloud_resources.db"
+    POSTGRESQL_URL="postgresql+psycopg2://username:password@localhost:5432/cloud_resources"
     db_url = os.getenv("DB_URL", MYSQL_URL)
     engine = init_db(db_url)
     print(f"✅ Initialized DB at {db_url}")

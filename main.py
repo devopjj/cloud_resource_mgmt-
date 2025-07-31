@@ -6,10 +6,10 @@ from core.context import CollectorContext
 from core.registry import COLLECTOR_REGISTRY
 from core.database import setup_database, get_session  # 引入数据库初始化接口
 from core import models 
-DB_NAME = "cloud_assets"
+DB_NAME = "cloud_resources"
 MYSQL_URL = f"mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/{DB_NAME}?charset=utf8mb4"
-SQLITE_URL = f"sqlite:///{DB_NAME}.db"
-POSTGRESQL_URL = f"postgresql+psycopg2://username:password@localhost:5432/{DB_NAME}"
+SQLITE_URL = f"sqlite:///CLOUD_ASSETS.db"
+POSTGRESQL_URL = f"postgresql+psycopg2://username:password@localhost:5432/cloud_resources"
 DB_URL  = os.getenv("DB_URL", MYSQL_URL)
 engine = setup_database(DB_URL )
 
