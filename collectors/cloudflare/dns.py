@@ -1,4 +1,12 @@
-# collectors/cloudflare/dns.py
+"""
+File    : collectors/cloudflare/dns.py
+Function: 收集 Cloudflare DNS 記錄資訊
+Author  : Ericseway
+Email   : devopjj@gmail.com
+Created : 2025-07-31
+Modified: 2025-07-31
+Version: 1.0.0
+"""
 import os
 from typing import List
 from datetime import datetime
