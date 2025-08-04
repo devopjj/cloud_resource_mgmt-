@@ -1,66 +1,85 @@
-# collectors/aws/route53.py
+# collectors/aws/dns.py
+
 from typing import List
 from datetime import datetime
 from core.base_collector import BaseCollector
 from core.models import ResourceItem
 from core.registry import register_collector
 import boto3
-import os
+from botocore.exceptions import BotoCoreError, ClientError
+from tqdm import tqdm
+from jjutils.Tools import (
+    LoggerSetup,
+    q
+)
+
+# 設置日誌
+logger = LoggerSetup(caller_file='aws_dns', log_dir="log", quiet_mode=False).get_logger()
+
 @register_collector("aws_dns")
 class AWSRoute53Collector(BaseCollector):
     def collect(self) -> List[ResourceItem]:
-        session = boto3.Session(profile_name=self.context.profile,
-                                region_name="us-east-1")
-        route53 = session.client("route53")
-        domain_client = session.client("route53domains")
-
         results = []
+        try:
+            session = boto3.Session(
+                profile_name=self.context.profile,
+                region_name="us-east-1"
+            )
+            route53 = session.client("route53")
+            domain_client = session.client("route53domains")
+        except Exception as e:
+            logger.exception("[!] Failed to initialize AWS session")
+            return results
 
         # 1. 已注册域名
         try:
             domains = domain_client.list_domains().get("Domains", [])
+            logger.info(f"[aws_dns] Found {len(domains)} registered domains")
 
             for d in domains:
                 results.append(ResourceItem(
                     provider="aws",
                     account_id=self.context.account_id,
-                    region="global",  # AWS全球区域
+                    region="global",
                     resource_type="registered_domain",
-                    resource_id=d["DomainName"],  # 使用DomainName作为resource_id
+                    resource_id=d["DomainName"],
                     name=d["DomainName"],
-                    status=None,  # 如果没有状态字段，可以设为None
-                    zone=None,    # 如果没有zone字段，可以设为None
-                    tags={},      # 如果没有tags字段，可以用空字典
-                    metadata=d,   # 将整个字典d作为metadata存储
-                    fetched_at=datetime.now()  # 设置当前时间为fetched_at
+                    status=None,
+                    zone=None,
+                    tags={},
+                    metadata=d,
+                    fetched_at=datetime.now()
                 ))
-        except Exception as e:
-            print(f"[!] Route53Domains list failed: {e}")
-        
-        # 2. 托管区域与记录集
+        except (BotoCoreError, ClientError, Exception) as e:
+            logger.exception("[!] Route53Domains list failed")
+
+        # 2. 托管区域
+        zones = []
         try:
             zones = route53.list_hosted_zones().get("HostedZones", [])
+            logger.info(f"[aws_dns] Found {len(zones)} hosted zones")
+
             for z in zones:
                 zone_id = z["Id"].split("/")[-1]
                 results.append(ResourceItem(
                     provider="aws",
                     account_id=self.context.account_id,
-                    region="global",  # AWS全球区域
+                    region="global",
                     resource_type="route53_zone",
-                    resource_id=zone_id,  # 使用DomainName作为resource_id
+                    resource_id=zone_id,
                     name=z["Name"],
-                    status=None,  # 如果没有状态字段，可以设为None
-                    zone=None,    # 如果没有zone字段，可以设为None
-                    tags={},      # 如果没有tags字段，可以用空字典
-                    metadata=z,   # 将整个字典d作为metadata存储
-                    fetched_at=datetime.now()  # 设置当前时间为fetched_at
+                    status=None,
+                    zone=None,
+                    tags={},
+                    metadata=z,
+                    fetched_at=datetime.now()
                 ))
-        except Exception as e:
-            print(f"[!] Hosted zones list failed: {e}")
-        
-        # 3. 各托管区的 DNS 解析记录（dns_record）
-        try:
-            for z in zones:
+        except (BotoCoreError, ClientError, Exception) as e:
+            logger.exception("[!] Hosted zones list failed")
+
+        # 3. 各托管区的 DNS 解析记录
+        for z in tqdm(zones, desc="[aws_dns] Fetching DNS records"):
+            try:
                 zone_id = z["Id"].split("/")[-1]
                 zone_name = z["Name"]
 
@@ -72,7 +91,9 @@ class AWSRoute53Collector(BaseCollector):
                         rr_type = rr.get("Type")
                         rr_name = rr.get("Name")
                         rr_ttl = rr.get("TTL", None)
-                        rr_values = [r.get("Value") for r in rr.get("ResourceRecords", [])] if "ResourceRecords" in rr else []
+                        rr_values = [
+                            r.get("Value") for r in rr.get("ResourceRecords", [])
+                        ] if "ResourceRecords" in rr else []
                         rr_status = "alias" if "AliasTarget" in rr else "normal"
 
                         results.append(ResourceItem(
@@ -93,7 +114,8 @@ class AWSRoute53Collector(BaseCollector):
                             },
                             fetched_at=datetime.now()
                         ))
-        except Exception as e:
-            print(f"[!] DNS record list failed for zone {zone_id}: {e}")
-        
+            except (BotoCoreError, ClientError, Exception) as e:
+                logger.exception(f"[!] DNS record list failed for zone {z.get('Id')}")
+
+        logger.info(f"[aws_dns] Total resources collected: {len(results)}")
         return results

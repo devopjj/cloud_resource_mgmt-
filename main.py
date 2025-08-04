@@ -6,6 +6,11 @@ from core.context import CollectorContext
 from core.registry import COLLECTOR_REGISTRY
 from core.database import setup_database, get_session  # 引入数据库初始化接口
 from core import models 
+from core.db_writer import insert_if_not_exists_or_log_diff
+
+from sqlalchemy.dialects.mysql import insert
+from core.models import CloudResource
+
 DB_NAME = "cloud_resources"
 MYSQL_URL = f"mysql+mysqlconnector://dbuser:12345@10.11.11.62:3306/{DB_NAME}?charset=utf8mb4"
 SQLITE_URL = f"sqlite:///CLOUD_ASSETS.db"
@@ -73,7 +78,10 @@ def main():
                 session.add(acct_query)
                 session.flush()  # 得到acct_query.id用于外键
             cloud_resource.cloud_account_id = acct_query.id
-            session.add(cloud_resource)
+            
+            #session.add(cloud_resource)
+            insert_if_not_exists_or_log_diff(session, cloud_resource)
+            
             print(f"[{r.resource_type}] {r.name} ({r.resource_id})")
         # 提交当前账户的资源记录
         session.commit()

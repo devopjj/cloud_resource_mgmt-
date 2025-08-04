@@ -66,7 +66,7 @@ def create_indexes(engine: Engine):
         safe_create_index("idx_provider_type", "CREATE INDEX idx_provider_type ON cloud_resource(provider, resource_type)")
         safe_create_index("idx_region_zone", "CREATE INDEX idx_region_zone ON cloud_resource(region, zone)")
         safe_create_index("idx_fetched_at", "CREATE INDEX idx_fetched_at ON cloud_resource(fetched_at)")
-
+        safe_create_index("uq_resource", "ALTER TABLE cloud_resource ADD UNIQUE KEY uq_resource (cloud_account_id, resource_type, resource_id)")
         if backend.startswith("postgresql"):
             print("🔧 创建 PostgreSQL GIN 索引...")
             safe_create_index("idx_metadata_domain_name", """

@@ -10,7 +10,15 @@ class BaseCollector(ABC):
 
     def collect(self, context: "CollectContext") -> List[ResourceItem]:
         raise NotImplementedError
-    
+
+    def resolve_real_records(self, item, region: str):
+        """
+        可选择性覆写：取得该 resource 的真实解析
+        item: ResourceItem
+        region: 可模拟来自某区域的查询
+        """
+        return []
+        
     @abstractmethod
     def collect(self) -> List[ResourceItem]:
         ...

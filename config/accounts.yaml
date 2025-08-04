@@ -1,18 +1,17 @@
 samples:
+  - name: cloudflare-rptsw
+    provider: cloudflare
+    api_token: os.environ.get("CLOUDFLARE_API_TOKEN")
+    account_id: "rptsw_cloudflare_main" # 云账号唯一ID，如AWS账号ID等
+  - name: aliyun-dns-prod
+    provider: aliyun
+    credentials:
+      access_key: "LTAI5tB6U2TFCEtt2rw9BymS"
+      secret_key: "Kol57bRDt6lx347U2aRlFXboJaPNV0"
+accounts:
   - name: aws-wangyou
     provider: aws
     account_id: "rptsw_aws_wangyou" # 云账号唯一ID，如AWS账号ID等
     profile: rptsw_wangyou_readonly # ~/.aws/credentials中的profile 名称
     regions: ["ap-east-1"]  # Route53 是 global，但我们保留这个字段
     default_region: ap-east-1
-  - name: cloudflare-rptsw
-    provider: cloudflare
-    api_token: os.environ.get("CLOUDFLARE_API_TOKEN")
-    account_id: "rptsw_cloudflare_main" # 云账号唯一ID，如AWS账号ID等
-accounts:
-  - name: aliyun-dns-prod
-    provider: aliyun
-    credentials:
-      access_key: "LTAI5tB6U2TFCEtt2rw9BymS"
-      secret_key: "Kol57bRDt6lx347U2aRlFXboJaPNV0"
-

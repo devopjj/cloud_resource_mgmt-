@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+File    : core/models.py
+Function: 定义 ResolvedDnsRecord 模型，用于储存真实 DNS 解析结果
+Author  : Jimmy
+Email   : devopjj@gmail.com
+Created : 2025-08-05 , 23:53
+Modified: 2025-08-05 , 23:53
+Version: 1.0
+"""
 import uuid
 from datetime import datetime
 import enum
@@ -13,7 +24,6 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
 Base = declarative_base()
-SessionLocal = sessionmaker()
 
 # ---------- ENUM TYPES ----------
 
@@ -77,7 +87,18 @@ class ResourceItem(BaseModel):
             fetched_at=self.fetched_at  # 直接传递 datetime 对象
         )
 # ---------- MODELS ----------
+class ResolvedDnsRecord(Base):
+    __tablename__ = "resolved_dns_record"
 
+    id = Column(String(36), primary_key=True)
+    cloud_resource_id = Column(String(36), ForeignKey("cloud_resource.id"), nullable=False)
+    domain_name = Column(String(255), nullable=False)
+    region = Column(String(64), nullable=False)
+    record_type = Column(String(10), default="A")
+    resolved_data = Column(Text, nullable=False)  # 存储 JSON 字串，如 ["1.1.1.1", "2.2.2.2"]
+    description = Column(Text)
+    resolved_at = Column(DateTime)
+    
 class CloudAccount(Base):
     __tablename__ = "cloud_account"
 
