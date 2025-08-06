@@ -9,9 +9,65 @@ samples:
       access_key: "LTAI5tB6U2TFCEtt2rw9BymS"
       secret_key: "Kol57bRDt6lx347U2aRlFXboJaPNV0"
 accounts:
-  - name: aws-wangyou
+  - name: rptsw-aws-wy
     provider: aws
-    account_id: "rptsw_aws_wangyou" # 云账号唯一ID，如AWS账号ID等
-    profile: rptsw_wangyou_readonly # ~/.aws/credentials中的profile 名称
-    regions: ["ap-east-1"]  # Route53 是 global，但我们保留这个字段
+    account_id: rptsw_aws_wangyou
+    profile: rptsw_
+    regions: [ap-east-1]
     default_region: ap-east-1
+accounts2:
+   - name: rptsw-aws-cn
+    provider: aws
+    account_id: rptsw_aws_rptcabernet
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-cn2
+    provider: aws
+    account_id: rptsw_aws_cabernethk
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-cn3
+    provider: aws
+    account_id: rptsw_aws_fcmo
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-melo
+    provider: aws
+    account_id: rptsw_aws_rptmelo
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-wy
+    provider: aws
+    account_id: rptsw_aws_wangyou
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-vn
+    provider: aws
+    account_id: rptsw_aws_rptcabernetvn
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-vn2
+    provider: aws
+    account_id: rptsw_aws_cabernethcm
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1
+
+  - name: rptsw-aws-marble
+    provider: aws
+    account_id: rptsw_aws_rptmarble
+    profile: rptsw_
+    regions: [ap-east-1]
+    default_region: ap-east-1   
