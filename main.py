@@ -7,6 +7,7 @@ from core.registry import COLLECTOR_REGISTRY
 from core.database import setup_database, get_session  # 引入数据库初始化接口
 from core import models 
 from core.db_writer import insert_if_not_exists_or_log_diff
+from core.meta_normalizer import normalize_meta
 
 from sqlalchemy.dialects.mysql import insert
 from core.models import CloudResource
@@ -29,6 +30,28 @@ def import_all_collectors():
                     importlib.import_module(module_name)
                 except Exception as e:
                     print(f"[!] 载入收集器 {module_name} 失败: {e}")
+from core.meta_normalizer import normalize_meta
+
+def process_resources(provider: str, resource_type: str, records: list, **ctx):
+    """
+    provider: aws / aliyun / cloudflare
+    resource_type: dns_record / vpc / ecs / slb
+    """
+    result = []
+    for rec in records:
+        meta = normalize_meta(provider, resource_type, rec, **ctx)
+        item = {
+            "provider": provider,
+            "resource_type": resource_type,
+            "resource_name": meta.get("resource_name"),
+            "resource_id": meta.get("resource_id"),
+            "region": meta.get("region"),
+            "status": meta.get("status"),
+            "resource_metadata": meta
+        }
+        # 这里接入你的 upsert + diff log 逻辑
+        result.append(item)
+    return result
 
 def main():
 
